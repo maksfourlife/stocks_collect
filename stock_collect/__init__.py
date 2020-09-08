@@ -12,12 +12,18 @@ from nltk.corpus import stopwords
 import re
 
 
+def expand_url(url, root_url):
+    if url.startswith("/"):
+        return root_url + url[1:]
+    return url
+
+
 def fetch_page_urls(url, page_pattern, session):
     res = session.get(url)
     if not res.ok:
         return []
     contents = res.content.decode("utf-8")
-    return findall(page_pattern, contents)
+    return [expand_url(t, url) for t in findall(page_pattern, contents)]
 
 
 def merge_tags(soup, tag_names):
@@ -30,7 +36,7 @@ def get_page_data(website, page_url, session):
         return ""
     soup = BeautifulSoup(res.content.decode("utf-8"), features="html.parser")
     content, time = (merge_tags(soup, website[tags]) for tags in ("content_tags", "time_tags"))
-    return content, parse(time)
+    return content, parse(re.sub(website["time_replace"], "", time, flags=re.IGNORECASE))
 
 
 def filter_news(time_lower, time_upper, news):
@@ -40,7 +46,7 @@ def filter_news(time_lower, time_upper, news):
 
 def dump_news(dumping_folder, news_content, time_stamp):
     """{timestamp: 18:00, content: "Everyone knows Donald Tru...",  TODO: stocks: [...],  TODO: stock_slope: 3.22,}"""
-    with open(join(dumping_folder, f"{time_stamp.day}_{time_stamp.month}_{time_stamp.year}.dump"), "a+") as f:
+    with open(join(dumping_folder, f"{time_stamp.day}_{time_stamp.month}_{time_stamp.year}-news.dump"), "a+") as f:
         f.write(dumps({
             "timestamp": f"{time_stamp.hour}:{time_stamp.minute}",
             "content": news_content,
@@ -96,4 +102,11 @@ def start_fetching(interval, dumping_folder="dumps", start_time=datetime.now()):
 
 
 if __name__ == "__main__":
-    fetch(timedelta(hours=1), start_time=datetime.now() - timedelta(hours=1))
+    # fetch(timedelta(hours=1), start_time=datetime.now() - timedelta(hours=1))
+    with open("websites.json", "r") as f:
+        websites = loads(f.read())
+    website = websites[0]
+    with Session() as sess:
+        urls = fetch_page_urls(website["url"], website["page_pattern"], sess)[:1]
+        news = [get_page_data(website, url, sess) for url in urls]
+    pass

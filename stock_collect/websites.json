@@ -3,6 +3,21 @@
     "url": "https://www.forbes.com/",
     "page_pattern": "https:\\/\\/www\\.forbes\\.com\\/sites\\/\\w+\\/\\d{4}\\/\\d{2}\\/\\d{2}\\/[\\w\\d-]+\\/",
     "content_tags": [".article-body p"],
-    "time_tags": [".content-data time"]
+    "time_tags": [".content-data time"],
+    "time_replace": ""
+  },
+  {
+    "url": "https://www.marketwatch.com/",
+    "page_pattern": "\\bhttps:\\/\\/www\\.marketwatch\\.com\\/story\\/.+\\b",
+    "content_tags": [".article__body p"],
+    "time_tags": ["time.timestamp.timestamp--pub"],
+    "time_replace": "published:"
+  },
+  {
+    "url": "https://www.reuters.com/",
+    "page_pattern": "\\/article\\/[\\w\\-]+\\/[\\w\\-]+\\b",
+    "content_tags": [".StandardArticleBody_body"],
+    "time_tags": [".ArticleHeader_date"],
+    "time_replace": "(\\/|updated.*ago)"
   }
 ]
