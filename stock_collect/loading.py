@@ -1,6 +1,8 @@
+import bs4
 import json
 import requests
 import re
+import base64
 
 
 def expand_url(url, root_url):
@@ -9,30 +11,39 @@ def expand_url(url, root_url):
     return url
 
 
-def merge_tags(soup, tag_names):
-    return "".join("".join(t.text for t in soup.select(tag)) for tag in tag_names)
+def encode_url(url):
+    return base64.b64encode(bytes(hex(hash(url)), "utf-8"))
 
 
 class Loader:
     def __init__(self, websites_file):
+        self.websites = {}
         with open(websites_file, "r") as f:
-            self.websites = json.loads(f)
+            for website in json.loads(f.read()):
+                self.websites[website["url"]] = {k: v for k, v in website.items() if k != "url"}
         self.page_urls = {}
 
     def load_pages(self):
-        with requests.Session:
-            for website in self.websites:
-                if not (res := requests.get(website["url"])).ok:
+        with requests.Session() as sess:
+            sess.headers.update({'Cache-Control': 'no-cache'})
+            for website_url, website in self.websites.items():
+                if not (res := sess.get(website_url)).ok:
                     continue
+                if website_url not in self.page_urls:
+                    self.page_urls[website_url] = []
                 for url in re.findall(website["page_pattern"], res.content.decode("utf-8")):
-                    url_ = website["url"] + ":" + self.expand_url(url, website_url)
-                    self.page_urls[hash(url_)].append(url_)
+                    url_ = expand_url(url, website_url)
+                    self.page_urls[website_url].append((encode_url(url_), url_))
 
     def get_data(self):
-        with requests.Session:
-            for url_hash, url in self.page_urls.values():
-                if not (res := requests.get(url)).ok:
-                    continue
-                soup = BeautifulSoup(res.content.decode("utf-8"), features="html.parser")
-                content, time = (merge_tags(soup, website[tags]) for tags in ("content_tags", "time_tags"))
-                yield url_hash, (content, parse(re.sub(website["time_replace"], "", time, flags=re.IGNORECASE)))
+        with requests.Session() as sess:
+            sess.headers.update({'Cache-Control': 'no-cache'})
+            for website_url, page_urls in self.page_urls.items():
+                for (url_key, url) in page_urls:
+                    if not (res := sess.get(url)).ok:
+                        continue
+                    # Ideas
+                    # default tags (p, h1, h2, h3, ...)
+                    # getting site url by re
+                    soup = bs4.BeautifulSoup(res.content.decode("utf-8"), features="html.parser")
+                    yield "".join(t.get_text() for t in soup.find_all(self.websites[website_url]["content_tags"]))
