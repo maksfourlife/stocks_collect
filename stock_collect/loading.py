@@ -4,6 +4,8 @@ import requests
 import re
 import base64
 
+from file import IO
+
 
 def expand_url(url, root_url):
     if url[0] == "/":
@@ -16,7 +18,10 @@ def encode_url(url):
 
 
 class Loader:
-    def __init__(self, websites_file):
+    def __init__(self, websites_file, load_interval, save_directory, save_interval=-1):
+        save_interval = {-1: load_interval}.get(save_interval, save_interval)
+        self.load_interval = load_interval
+        self.saver = IO(save_directory, save_interval, self)
         self.websites = {}
         with open(websites_file, "r") as f:
             for website in json.loads(f.read()):
@@ -24,26 +29,28 @@ class Loader:
         self.page_urls = {}
 
     def load_pages(self):
+        url_keys = self.saver.get_last_hashes()
         with requests.Session() as sess:
             sess.headers.update({'Cache-Control': 'no-cache'})
             for website_url, website in self.websites.items():
-                if not (res := sess.get(website_url)).ok:
+                try:
+                    if not (res := sess.get(website_url)).ok:
+                        continue
+                    for url in re.findall(website["page_pattern"], res.content.decode("utf-8")):
+                        url = expand_url(url, website_url)
+                        if (key := encode_url(url)) not in url_keys:
+                            self.page_urls[key] = url
+                except:
                     continue
-                if website_url not in self.page_urls:
-                    self.page_urls[website_url] = []
-                for url in re.findall(website["page_pattern"], res.content.decode("utf-8")):
-                    url_ = expand_url(url, website_url)
-                    self.page_urls[website_url].append((encode_url(url_), url_))
 
     def get_data(self):
         with requests.Session() as sess:
             sess.headers.update({'Cache-Control': 'no-cache'})
-            for website_url, page_urls in self.page_urls.items():
-                for (url_key, url) in page_urls:
+            for _, url in self.page_urls.items():
+                try:
                     if not (res := sess.get(url)).ok:
                         continue
-                    # Ideas
-                    # default tags (p, h1, h2, h3, ...)
-                    # getting site url by re
                     soup = bs4.BeautifulSoup(res.content.decode("utf-8"), features="html.parser")
-                    yield "".join(t.get_text() for t in soup.find_all(self.websites[website_url]["content_tags"]))
+                    yield "".join(t.get_text() for t in soup.find_all(["p", "h1", "h2", "h3", "h4", "h5"]))
+                except:
+                    continue
