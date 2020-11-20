@@ -21,7 +21,6 @@ class Processer:
         return [self.lem.lemmatize(word, tag) for word, tag in tagged_words]
 
     def process_news(self, news):
-        """TODO: Rewrite as generator."""
         pt = re.compile(r"\b([a-zA-Z]+[/\-&][a-zA-Z]+|[a-zA-Z]+|\d{4})\b")
         condition = lambda t: t and t not in self.stop_words and len(t) > 1
         return self._lemmatize_words([t for t in pt.findall(news.replace('\xa0', ' ').lower()) if condition(t)])

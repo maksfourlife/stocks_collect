@@ -3,42 +3,52 @@ import json
 import requests
 import re
 import base64
+import time
+import threading
 
 from file import IO
 
 
-def expand_url(url, root_url):
+def _expand_url(url, root_url):
     if url[0] == "/":
         return root_url + url[1:]
     return url
 
 
-def encode_url(url):
+def _encode_url(url):
     return base64.b64encode(bytes(hex(hash(url)), "utf-8"))
 
 
 class Loader:
-    def __init__(self, websites_file, load_interval, save_directory, save_interval=-1):
-        save_interval = {-1: load_interval}.get(save_interval, save_interval)
-        self.load_interval = load_interval
-        self.saver = IO(save_directory, save_interval, self)
+    def __init__(self, websites_file, directory, interval):
+        self.interval = interval
+        self.saver = IO(directory)
         self.websites = {}
         with open(websites_file, "r") as f:
             for website in json.loads(f.read()):
                 self.websites[website["url"]] = {k: v for k, v in website.items() if k != "url"}
         self.page_urls = {}
 
-    def load_pages(self):
+    def start(self):
+        threading.Thread(target=self._loop, name="LoaderThread", daemon=True).start()
+
+    def _loop(self):
+        while True:
+            self.load_pages()
+            self.saver.save_news(self)
+            time.sleep(self.interval)
+
+    def load_pages(self, timeout=5):
         url_keys = self.saver.get_last_hashes()
         with requests.Session() as sess:
             sess.headers.update({'Cache-Control': 'no-cache'})
             for website_url, website in self.websites.items():
                 try:
-                    if not (res := sess.get(website_url)).ok:
+                    if not (res := sess.get(website_url, timeout=timeout)).ok:
                         continue
                     for url in re.findall(website["page_pattern"], res.content.decode("utf-8")):
-                        url = expand_url(url, website_url)
-                        if (key := encode_url(url)) not in url_keys:
+                        url = _expand_url(url, website_url)
+                        if (key := _encode_url(url)) not in url_keys:
                             self.page_urls[key] = url
                 except:
                     continue
