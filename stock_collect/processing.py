@@ -4,7 +4,8 @@ import re
 
 
 class Processer:
-    _ptag_switch = {t: getattr(wordnet.wordnet, u) for t, u in zip(("J", "V", "N", "R"), ("ADJ", "VERB", "NOUN", "ADV"))}
+    _ptag_switch = {t: getattr(wordnet.wordnet, u) for t, u in
+                    zip(("J", "V", "N", "R"), ("ADJ", "VERB", "NOUN", "ADV"))}
 
     def __init__(self):
         self.stop_words = stopwords.words("english")

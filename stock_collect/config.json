@@ -1,4 +1,5 @@
 {
   "database": "database.sqlite",
-  "websites": "websites.json"
+  "websites": "websites.json",
+  "loading-timeout": 5
 }

@@ -13,3 +13,12 @@ class App:
 
 
 from .model import Token, News
+from .console import Console
+
+
+class App(App):
+    def __init__(self):
+        self.console = Console()
+
+    def start(self):
+        self.console.start()

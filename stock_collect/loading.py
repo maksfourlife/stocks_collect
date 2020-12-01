@@ -6,61 +6,46 @@ import base64
 import time
 import threading
 
-from file import IO
 
-
-def _expand_url(url, root_url):
-    if url[0] == "/":
-        return root_url + url[1:]
-    return url
-
-
-def _encode_url(url):
-    return base64.b64encode(bytes(hex(hash(url)), "utf-8"))
+class _Session(requests.Session):
+    def __init__(self):
+        super(_Session, self).__init__()
+        self.headers.update({'Cache-Control': 'no-cache'})
 
 
 class Loader:
-    def __init__(self, websites_file, directory, interval):
-        self.interval = interval
-        self.saver = IO(directory)
-        self.websites = {}
-        with open(websites_file, "r") as f:
-            for website in json.loads(f.read()):
-                self.websites[website["url"]] = {k: v for k, v in website.items() if k != "url"}
-        self.page_urls = {}
+    @staticmethod
+    def create_session():
+        return _Session()
 
-    def start(self):
-        threading.Thread(target=self._loop, name="LoaderThread", daemon=True).start()
+    @staticmethod
+    def _encode_url(url):
+        return base64.b64encode(bytes(hex(hash(url)), "utf-8"))
 
-    def _loop(self):
-        while True:
-            self.load_pages()
-            self.saver.save_news(self)
-            time.sleep(self.interval)
+    @staticmethod
+    def _expand_url(url, website_url):
+        if url[0] == "/":
+            return website_url + url[1:]
+        return url
 
-    def load_pages(self, timeout=5):
-        url_keys = self.saver.get_last_hashes()
-        with requests.Session() as sess:
-            sess.headers.update({'Cache-Control': 'no-cache'})
-            for website_url, website in self.websites.items():
-                try:
-                    if not (res := sess.get(website_url, timeout=timeout)).ok:
-                        continue
-                    for url in re.findall(website["page_pattern"], res.content.decode("utf-8")):
-                        url = _expand_url(url, website_url)
-                        if (key := _encode_url(url)) not in url_keys:
-                            self.page_urls[key] = url
-                except:
+    @staticmethod
+    def get_pages(websites, session, timeout=5):
+        for website_url, website in websites.items():
+            try:
+                if not (res := session.get(website_url, timeout=timeout)).ok:
                     continue
+                for url in re.findall(website["page_pattern"], res.content.decode("utf-8")):
+                    url = Loader._expand_url(url, website_url)
+                    yield url, Loader._encode_url(url)
+            except Exception as e:
+                print(e)
 
-    def get_data(self):
-        with requests.Session() as sess:
-            sess.headers.update({'Cache-Control': 'no-cache'})
-            for _, url in self.page_urls.items():
-                try:
-                    if not (res := sess.get(url)).ok:
-                        continue
-                    soup = bs4.BeautifulSoup(res.content.decode("utf-8"), features="html.parser")
-                    yield "".join(t.get_text() for t in soup.find_all(["p", "h1", "h2", "h3", "h4", "h5"]))
-                except:
-                    continue
+    @staticmethod
+    def load_page(url, session):
+        try:
+            if not (res := session.get(url)).ok:
+                return
+            soup = bs4.BeautifulSoup(res.content.decode("utf-8"), features="html.parser")
+            return "".join(t.get_text() for t in soup.find_all(["p", "h1", "h2", "h3", "h4", "h5"]))
+        except Exception as e:
+            print(e)
