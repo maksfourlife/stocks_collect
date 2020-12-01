@@ -13,4 +13,5 @@ class Token(_BaseModel):
 
 class News(_BaseModel):
     news_id = peewee.AutoField()
+    time = peewee.DateTimeField()
     news = peewee.TextField()

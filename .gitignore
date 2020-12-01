@@ -4,3 +4,4 @@ dumps
 */__pychache__
 .DS_Store
 */.DS_Store
+database.sqlite

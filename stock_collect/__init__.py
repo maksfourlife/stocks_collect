@@ -1,24 +1,29 @@
+import os.path as path
 import peewee
 import json
 import atexit
 
 
 class App:
-    _config = json.loads("congfig.json")
+    with open(path.join(path.dirname(__file__), "config.json"), "r") as _config:
+        _config = json.loads(_config.read())
     connection = {
         "sqlite": peewee.SqliteDatabase,
     }[_config["database"].split(".")[-1]](_config["database"])
     cursor = connection.cursor()
-    atexit.register(lambda: connection.close())
+    atexit.register(lambda: App.connection.close())
 
 
 from .model import Token, News
-from .console import Console
+from .controller import Controller
+from .io_ import Loader, Processer
 
 
 class App(App):
     def __init__(self):
-        self.console = Console()
+        self.controller = Controller()
+        self._context = {}
 
     def start(self):
-        self.console.start()
+        while True:
+            self.controller(self._context)
