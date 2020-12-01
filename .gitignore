@@ -1,5 +1,6 @@
 venv
 .idea
 dumps
-**/__pychache__
-**.DS_Store
+*/__pychache__
+.DS_Store
+*/.DS_Store
