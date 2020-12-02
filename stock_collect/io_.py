@@ -8,6 +8,8 @@ import requests
 from nltk import wordnet, pos_tag, WordNetLemmatizer
 from nltk.corpus import stopwords
 
+from .controller import Controller
+
 
 class _Session(requests.Session):
     """Session with pre-set parameters."""
@@ -35,21 +37,23 @@ class Loader:
             return website_url + url[1:]
         return url
 
-    @staticmethod
-    def get_pages(websites: tp.Iterable[tp.Iterable[int]], session: _Session, token_model: peewee.Model,
+    @classmethod
+    def get_pages(cls: type, websites: tp.Iterable[tp.Iterable[int]], session: _Session, token_model: peewee.Model,
                   timeout: int = 5) -> tp.Generator[None, tp.Union[tp.Tuple[str, str], None], None]:
         """Fetches page urls from websites' main pages and stores their's tokens."""
-        for websitre_url, page_pattern, *_ in websites.items():
+        for i, (websitre_url, page_pattern, *_) in enumerate(websites.items()):
             try:
                 if not (res := session.get(website_url, timeout=timeout)).ok:
                     continue
-                for url in re.findall(page_pattern, res.content.decode("utf-8")):
+                for j, url in enumerate(re.findall(page_pattern, res.content.decode("utf-8"))):
                     url = Loader._expand_url(url, website_url)
                     if token_model.get_or_none(token_model.token == (token := Loader._encode_url(url))) is None:
                         token_model.create(token=token)
+                        Controller.set_state(f"{cls}.get_pages", "working", i + 1, len(websites), j + 1)
                         yield url
             except Exception as e:
                 print(e)
+        Controller.set_state(f"{cls}.get_pages", "done")
 
     @staticmethod
     def load_page(url: str, session: _Session) -> tp.Union[str, None]:

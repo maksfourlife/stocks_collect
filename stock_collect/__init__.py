@@ -1,5 +1,6 @@
 from time import sleep
 from datetime import datetime as dt
+from threading import Thread
 import os.path as path
 import peewee
 import json
@@ -27,10 +28,15 @@ from .io_ import Loader, Processer
 class App(App):
     def __init__(self):
         self.controller = Controller()
-        self._context = {}
+        self._context = {
+            "cycle_running": False,
+        }
+        Thread(target=self._cycle, name="cycle_thread", daemon=True).start()
 
     def _cycle(self):
         while True:
+            if not self._context["cycle_running"]:
+                continue
             news_now = News.create(time=dt.now(), news="")
             with Loader.create_session() as sess:
                 for page in Loader.get_pages(self.websites, sess, Token, self._config["timeout"]):
