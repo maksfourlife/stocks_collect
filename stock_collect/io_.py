@@ -1,6 +1,7 @@
 import base64
 import re
 import typing as tp
+import peewee
 
 import bs4
 import requests
@@ -35,16 +36,18 @@ class Loader:
         return url
 
     @staticmethod
-    def get_pages(websites: tp.Iterable[tp.Iterable[int]], session: _Session, timeout: int = 5)\
-            -> tp.Generator[None, tp.Union[tp.Tuple[str, str], None], None]:
-        """Fetches page urls from websites' main pages."""
+    def get_pages(websites: tp.Iterable[tp.Iterable[int]], session: _Session, token_model: peewee.Model,
+                  timeout: int = 5) -> tp.Generator[None, tp.Union[tp.Tuple[str, str], None], None]:
+        """Fetches page urls from websites' main pages and stores their's tokens."""
         for websitre_url, page_pattern, *_ in websites.items():
             try:
                 if not (res := session.get(website_url, timeout=timeout)).ok:
                     continue
                 for url in re.findall(page_pattern, res.content.decode("utf-8")):
                     url = Loader._expand_url(url, website_url)
-                    yield url, Loader._encode_url(url)
+                    if token_model.get_or_none(token_model.token == (token := Loader._encode_url(url))) is None:
+                        token_model.create(token=token)
+                        yield url
             except Exception as e:
                 print(e)
 

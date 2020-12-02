@@ -1,23 +1,14 @@
 [
   {
     "url": "https://www.forbes.com/",
-    "page_pattern": "https:\\/\\/www\\.forbes\\.com\\/sites\\/\\w+\\/\\d{4}\\/\\d{2}\\/\\d{2}\\/[\\w\\d-]+\\/",
-    "content_tags": ["p"],
-    "time_tags": [".content-data time"],
-    "time_replace": ""
+    "page_pattern": "https:\\/\\/www\\.forbes\\.com\\/sites\\/\\w+\\/\\d{4}\\/\\d{2}\\/\\d{2}\\/[\\w\\d-]+\\/"
   },
   {
     "url": "https://www.marketwatch.com/",
-    "page_pattern": "\\bhttps:\\/\\/www\\.marketwatch\\.com\\/story\\/.+\\b",
-    "content_tags": [".article__body p"],
-    "time_tags": ["time.timestamp.timestamp--pub"],
-    "time_replace": "published:"
+    "page_pattern": "\\bhttps:\\/\\/www\\.marketwatch\\.com\\/story\\/.+\\b"
   },
   {
     "url": "https://www.reuters.com/",
-    "page_pattern": "\\/article\\/[\\w\\-]+\\/[\\w\\-]+\\b",
-    "content_tags": [".StandardArticleBody_body"],
-    "time_tags": [".ArticleHeader_date"],
-    "time_replace": "(\\/|updated.*ago)"
+    "page_pattern": "\\/article\\/[\\w\\-]+\\/[\\w\\-]+\\b"
   }
 ]
