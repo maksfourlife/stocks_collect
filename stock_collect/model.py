@@ -15,3 +15,6 @@ class News(_BaseModel):
     news_id = peewee.AutoField()
     time = peewee.DateTimeField()
     news = peewee.TextField()
+
+
+App.connection.create_tables([Token, News], safe=True)

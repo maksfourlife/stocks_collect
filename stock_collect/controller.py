@@ -17,22 +17,18 @@ class Controller:
             print(e)
 
     @classmethod
-    def set_state(cls, caller, *args):
-        type_, *args = args
-        if type_ == "working":
-            cls._state_info[caller] = {
-                "Processer.get_pages": "Loading website %d of %d, loaded %d pages",
-            }[caller] % args
-        elif type_ == "done":
-            cls._state_info[(caller_cls, caller_func)] += " done!"
+    def set_page_loading_state(cls, websites=None, total_websites=None, pages=None, finished=False):
+        if finished:
+            cls._state_info["Loading pages"] += " - done!"
+        cls._state_info["Loading pages"] = f"Loading website {websites} of {total_websites}, loaded {pages} pages"
 
     @staticmethod
-    def _exit(*args):
+    def _exit(*_):
         import sys
         sys.exit(0)
 
     @staticmethod
-    def _hello(*args):
+    def _hello(*_):
         print("Hello, world!")
 
     @classmethod

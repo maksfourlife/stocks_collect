@@ -29,7 +29,7 @@ class App(App):
     def __init__(self):
         self.controller = Controller()
         self._context = {
-            "cycle_running": False,
+            "cycle_running": True,
         }
         Thread(target=self._cycle, name="cycle_thread", daemon=True).start()
 
@@ -37,11 +37,11 @@ class App(App):
         while True:
             if not self._context["cycle_running"]:
                 continue
-            news_now = News.create(time=dt.now(), news="")
+            news = []
             with Loader.create_session() as sess:
-                for page in Loader.get_pages(self.websites, sess, Token, self._config["timeout"]):
-                    news_now.news += " ".join(Processer.process_news(Loader.load_page(page, sess)))
-                    News.save()
+                for page in Loader.get_pages(self.websites, sess, Token, self._config["loading-timeout"]):
+                    news.extend(Processer.process_news(Loader.load_page(page, sess)))
+            News.create(time=dt.now(), news=" ".join(news)).save()
             sleep(self._config["interval"])
 
     def start(self):

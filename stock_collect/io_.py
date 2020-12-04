@@ -37,23 +37,25 @@ class Loader:
             return website_url + url[1:]
         return url
 
-    @classmethod
-    def get_pages(cls: type, websites: tp.Iterable[tp.Iterable[int]], session: _Session, token_model: peewee.Model,
+    @staticmethod
+    def get_pages(websites: tp.Iterable[tp.Iterable[int]], session: _Session, token_model: peewee.Model,
                   timeout: int = 5) -> tp.Generator[None, tp.Union[tp.Tuple[str, str], None], None]:
         """Fetches page urls from websites' main pages and stores their's tokens."""
-        for i, (websitre_url, page_pattern, *_) in enumerate(websites.items()):
+        Controller.set_page_loading_state(0, len(websites), 0)
+        for i, website in enumerate(websites):
+            website_url, page_pattern, *_ = website.values()
             try:
                 if not (res := session.get(website_url, timeout=timeout)).ok:
                     continue
                 for j, url in enumerate(re.findall(page_pattern, res.content.decode("utf-8"))):
                     url = Loader._expand_url(url, website_url)
                     if token_model.get_or_none(token_model.token == (token := Loader._encode_url(url))) is None:
-                        token_model.create(token=token)
-                        Controller.set_state(f"{cls}.get_pages", "working", i + 1, len(websites), j + 1)
+                        token_model.create(token=token).save()
                         yield url
+                        Controller.set_page_loading_state(i + 1, len(websites), j + 1)
             except Exception as e:
                 print(e)
-        Controller.set_state(f"{cls}.get_pages", "done")
+        Controller.set_page_loading_state(finished=True)
 
     @staticmethod
     def load_page(url: str, session: _Session) -> tp.Union[str, None]:
@@ -82,15 +84,16 @@ class Processer:
                 return item
         return Processer._ptag_switch["N"]
 
-    @staticmethod
-    def _lemmatize_words(words: tp.Iterable[str]) -> tp.Generator[None, tp.Tuple[str, str], None]:
+    @classmethod
+    def _lemmatize_words(cls, words: tp.Iterable[str]) -> tp.Generator[None, tp.Tuple[str, str], None]:
         """Lemmantizes words."""
-        tagged_words = ((word, Processer._get_ptag(tag)) for word, (_, tag) in zip(words, pos_tag(words)))
-        return (Processer._lem.lemmatize(word, tag) for word, tag in tagged_words)
+        return (cls._lem.lemmatize(word, cls._get_ptag(tag)) for word, tag in pos_tag(list(words)))
 
-    @staticmethod
-    def process_news(news: str) -> tp.Generator[None, str, None]:
+    @classmethod
+    def process_news(cls, news: str) -> tp.Iterable[str]:
         """Takes string of news, splits them, deletes waste and lemmatizes."""
+        if not news:
+            return []
         pt = re.compile(r"\b([a-zA-Z]+[/\-&][a-zA-Z]+|[a-zA-Z]+|\d{4})\b")
-        condition = lambda t: t and t not in Processer._stop_words and len(t) > 1
-        return Processer._lemmatize_words(t for t in pt.findall(news.replace('\xa0', ' ').lower()) if condition(t))
+        condition = lambda t: t and t not in cls._stop_words and len(t) > 1
+        return cls._lemmatize_words(t for t in pt.findall(news.replace('\xa0', ' ').lower()) if condition(t))
