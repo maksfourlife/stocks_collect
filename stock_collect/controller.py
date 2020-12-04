@@ -16,7 +16,7 @@ class Controller:
             print(e)
 
     @classmethod
-    def set_page_loading_state(cls, websites=None, total_websites=None, pages=None, finished=False):
+    def set_page_loading_state(cls, websites=0, total_websites=0, pages=0, finished=False):
         if finished:
             cls._state_info["Loading pages"] += " - done!"
         cls._state_info["Loading pages"] = f"Loading website {websites} of {total_websites}, loaded {pages} pages"

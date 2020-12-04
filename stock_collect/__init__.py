@@ -45,16 +45,16 @@ class App(App):
 
     def _notificate(self):
         while True:
+            sleep(self._config["notification-interval"] * 3600)
             try:
                 self.twilio_client.messages.create(
-                    body=f"Hello, Mr. Krutonog, loaded {self._counter} words.",
+                    body=f"Hello, Mr. {os.getenv('MR_NOBODY_NAME', 'Nobody')}, loaded {self._counter} words.",
                     from_=self._config["sender"],
                     to=self._config["receiver"])
                 with self._lock:
                     self._counter = 0
             except Exception as e:
                 print(e)
-            sleep(self._config["notification-interval"])
 
     def _cycle(self):
         while True:
@@ -63,9 +63,10 @@ class App(App):
             news = []
             with Loader.create_session() as sess:
                 for page in Loader.get_pages(self.websites, sess, Token, self._config["loading-timeout"]):
-                    news.extend(Processer.process_news(Loader.load_page(page, sess)))
-            with self._lock:
-                self._counter += len(news)
+                    add = Processer.process_news(Loader.load_page(page, sess))
+                    with self._lock:
+                        self._counter += len(add)
+                    news.extend(add)
             News.create(time=dt.now(), news=" ".join(news)).save()
             sleep(self._config["loading-interval"])
 

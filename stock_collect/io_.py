@@ -86,9 +86,9 @@ class Processer:
         return Processer._ptag_switch["N"]
 
     @classmethod
-    def _lemmatize_words(cls, words: tp.Iterable[str]) -> tp.Generator[None, tp.Tuple[str, str], None]:
+    def _lemmatize_words(cls, words: tp.Iterable[str]) -> tp.Iterable[str]:
         """Lemmantizes words."""
-        return (cls._lem.lemmatize(word, cls._get_ptag(tag)) for word, tag in pos_tag(list(words)))
+        return [cls._lem.lemmatize(word, cls._get_ptag(tag)) for word, tag in pos_tag(list(words))]
 
     @classmethod
     def process_news(cls, news: str) -> tp.Iterable[str]:
