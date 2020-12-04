@@ -50,7 +50,7 @@ class Loader:
                     continue
                 for j, url in enumerate(re.findall(page_pattern, res.content.decode("utf-8"))):
                     url = Loader._expand_url(url, website_url)
-                    if token_model.get_or_none(token_model.token == (token := Loader._encode_url(url))) is None:
+                    if not token_model.get_or_none(token_model.token == (token := Loader._encode_url(url))):
                         token_model.create(token=token).save()
                         yield url
                         Controller.set_page_loading_state(i + 1, len(websites), j + 1)

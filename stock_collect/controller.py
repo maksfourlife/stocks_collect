@@ -1,5 +1,4 @@
 import typing as tp
-from threading import Thread
 
 
 class Controller:

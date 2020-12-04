@@ -2,5 +2,9 @@
   "database": "database.sqlite",
   "websites": "websites.json",
   "loading-timeout": 5,
-  "interval": 3600
+  "loading-interval": 3600,
+  "notificate": true,
+  "notification-interval": 8,
+  "receiver": "+79299385176",
+  "sender": "+12017333267"
 }
