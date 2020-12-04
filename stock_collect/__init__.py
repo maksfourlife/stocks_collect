@@ -33,6 +33,7 @@ class App(App):
         if sid := os.getenv("TWILIO_ACCOUNT_SID"):
             if token := os.getenv("TWILIO_AUTH_TOKEN"):
                 self.twilio_client = Client(sid, token)
+        self.phones = {t: os.getenv(f"{t.upper()}_PHONE") for t in ("receiver", "sender")}
         self._counter = 0
         self._lock = Lock()
         self.controller = Controller()
@@ -40,17 +41,19 @@ class App(App):
             "cycle_running": True,
         }
         Thread(target=self._cycle, name="cycle_thread", daemon=True).start()
-        if self._config["notificate"] and self.twilio_client:
+        if self._config["notificate"] and self.twilio_client and all(self.phones.values()):
             Thread(target=self._notificate, name="notification_cycle", daemon=True).start()
+        else:
+            print("Notifications not avaible!")
 
     def _notificate(self):
         while True:
-            sleep(self._config["notification-interval"] * 3600)
+            sleep(self._config["notification-interval"])
             try:
                 self.twilio_client.messages.create(
                     body=f"Hello, Mr. {os.getenv('MR_NOBODY_NAME', 'Nobody')}, loaded {self._counter} words.",
-                    from_=self._config["sender"],
-                    to=self._config["receiver"])
+                    from_=self.phones["sender"],
+                    to=self.phones["receiver"])
                 with self._lock:
                     self._counter = 0
             except Exception as e:

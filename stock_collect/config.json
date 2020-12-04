@@ -4,7 +4,5 @@
   "loading-timeout": 5,
   "loading-interval": 3600,
   "notificate": true,
-  "notification-interval": 0.02,
-  "receiver": "+79299385176",
-  "sender": "+12017333267"
+  "notification-interval": 28800
 }
