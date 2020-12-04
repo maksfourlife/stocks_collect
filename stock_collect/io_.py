@@ -1,9 +1,10 @@
 import base64
+import hashlib
 import re
 import typing as tp
-import peewee
 
 import bs4
+import peewee
 import requests
 from nltk import wordnet, pos_tag, WordNetLemmatizer
 from nltk.corpus import stopwords
@@ -28,7 +29,7 @@ class Loader:
     @staticmethod
     def _encode_url(url: str) -> str:
         """Turns url into token."""
-        return base64.b64encode(bytes(hex(hash(url)), "utf-8"))
+        return base64.b64encode(hashlib.sha256(url.encode("utf-8")).digest()).decode("utf-8")
 
     @staticmethod
     def _expand_url(url: str, website_url: str) -> str:
