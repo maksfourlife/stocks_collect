@@ -34,17 +34,20 @@ class Loader:
     @staticmethod
     def _expand_url(url: str, website_url: str) -> str:
         """Adds domain name to url."""
+        lower = website_url.find("//") + 2
+        upper = website_url[lower:].find("/") + lower
+        website_url = website_url[:upper] + "/"
         if url[0] == "/":
             return website_url + url[1:]
         return url
 
     @staticmethod
     def get_pages(websites: tp.Iterable[tp.Iterable[str]], session: _Session, token_model: peewee.Model,
-                  timeout: int = 5) -> tp.Iterable[str]:
+                  timeout: int = 5) -> tp.Iterable[tp.Tuple[str, tp.List[str]]]:
         """Fetches page urls from websites' main pages and stores their's tokens."""
         Controller.set_page_loading_state(0, len(websites), 0)
         for i, website in enumerate(websites):
-            website_url, page_pattern, *_ = website
+            website_url, page_pattern, *adt = website
             try:
                 if not (res := session.get(website_url, timeout=(timeout, timeout))).ok:
                     continue
@@ -52,22 +55,23 @@ class Loader:
                     url = Loader._expand_url(url, website_url)
                     if not token_model.get_or_none(token_model.token == (token := Loader._encode_url(url))):
                         token_model.create(token=token).save()
-                        yield url
+                        yield url, adt
                         Controller.set_page_loading_state(i + 1, len(websites), j + 1)
             except Exception as e:
                 print(e)
         Controller.set_page_loading_state(finished=True)
 
     @staticmethod
-    def load_page(url: str, session: _Session) -> tp.Union[str, None]:
+    def load_page(url: str, adt: tp.List[str], session: _Session) -> str:
         """Loads page content."""
         try:
             if not (res := session.get(url)).ok:
-                return
+                return ""
             soup = bs4.BeautifulSoup(res.content.decode("utf-8"), features="html.parser")
-            return " ".join(t.get_text() for t in soup.find_all(["p", "h1", "h2", "h3", "h4", "h5"]))
+            return " ".join(t.get_text() for t in soup.select(", ".join(["p", "h1", "h2", "h3", "h4", "h5"] + adt)))
         except Exception as e:
             print(e)
+            return ""
 
 
 class Processer:

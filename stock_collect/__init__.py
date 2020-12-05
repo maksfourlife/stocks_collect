@@ -60,18 +60,24 @@ class App(App):
                 print(e)
 
     def _cycle(self):
-        # TODO: batched news loading
         while True:
             if not self._context["cycle_running"]:
                 continue
-            news = []
+            news = News.create(time=dt.now(), news="")
+            news.save()
+            news_ = []
             with Loader.create_session() as sess:
-                for page in Loader.get_pages(self.websites[5:], sess, Token, self._config["loading-timeout"]):
-                    add = Processer.process_news(Loader.load_page(page, sess))
+                for url, adt in Loader.get_pages(self.websites, sess, Token, self._config["loading-timeout"]):
+                    add = Processer.process_news(Loader.load_page(url, adt, sess))
                     with self._lock:
                         self._counter += len(add)
-                    news.extend(add)
-            News.create(time=dt.now(), news=" ".join(news)).save()
+                    news_.extend(add)
+                    if len(news_) >= self._config["batch-size"]:
+                        news.news += " ".join(news_) + " "
+                        news.save()
+                        news_.clear()
+            news.news += " ".join(news_) + " "
+            news.save()
             sleep(self._config["loading-interval"])
 
     def start(self):

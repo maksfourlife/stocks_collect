@@ -4,5 +4,6 @@
   "loading-timeout": 5,
   "loading-interval": 3600,
   "notificate": false,
-  "notification-interval": 28800
+  "notification-interval": 28800,
+  "batch-size": 10000
 }

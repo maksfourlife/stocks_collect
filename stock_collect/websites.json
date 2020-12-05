@@ -20,8 +20,8 @@
     "https:\\/\\/moneymorning\\.com\\/\\d+\\/\\d+\\/\\d+\\/[\\w-]+\\/?"
   ],
   [
-    "https://edition.cnn.com/business",
-    "https://edition\\.cnn\\.com\\/\\d+\\/\\d+\\/\\d+\\/\\w+\\/[\\w-]+\\/index\\.html\\/?",
-    "zn-body__paragraph"
+    "https://edition.cnn.com/business/",
+    "\\/\\d+\\/\\d+\\/\\d+\\/\\w+\\/[\\w-]+\\/index\\.html\\/?",
+    ".zn-body__paragraph"
   ]
 ]
