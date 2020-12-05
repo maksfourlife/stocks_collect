@@ -34,11 +34,11 @@ class App(App):
             if token := os.getenv("TWILIO_AUTH_TOKEN"):
                 self.twilio_client = Client(sid, token)
         self.phones = {t: os.getenv(f"{t.upper()}_PHONE") for t in ("receiver", "sender")}
-        self._counter = 0
         self._lock = Lock()
         self.controller = Controller()
         self._context = {
-            "cycle_running": True,
+            "cycle running": True,
+            "total words": 0
         }
         Thread(target=self._cycle, name="cycle_thread", daemon=True).start()
         if self._config["notificate"] and self.twilio_client and all(self.phones.values()):
@@ -51,17 +51,18 @@ class App(App):
             sleep(self._config["notification-interval"])
             try:
                 self.twilio_client.messages.create(
-                    body=f"Hello, Mr. {os.getenv('MR_NOBODY_NAME', 'Nobody')}, loaded {self._counter} words.",
+                    body=f"Hello, Mr. {os.getenv('MR_NOBODY_NAME', 'Nobody')}, "
+                         f"loaded {self._context['total words']} words.",
                     from_=self.phones["sender"],
                     to=self.phones["receiver"])
                 with self._lock:
-                    self._counter = 0
+                    self._context["total words"] = 0
             except Exception as e:
                 print(e)
 
     def _cycle(self):
         while True:
-            if not self._context["cycle_running"]:
+            if not self._context["cycle running"]:
                 continue
             news = News.create(time=dt.now(), news="")
             news.save()
@@ -70,7 +71,7 @@ class App(App):
                 for url, adt in Loader.get_pages(self.websites, sess, Token, self._config["loading-timeout"]):
                     add = Processer.process_news(Loader.load_page(url, adt, sess))
                     with self._lock:
-                        self._counter += len(add)
+                        self._context["total words"] += len(add)
                     news_.extend(add)
                     if len(news_) >= self._config["batch-size"]:
                         news.news += " ".join(news_) + " "

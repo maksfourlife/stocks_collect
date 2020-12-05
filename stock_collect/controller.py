@@ -18,8 +18,9 @@ class Controller:
     @classmethod
     def set_page_loading_state(cls, websites=0, total_websites=0, pages=0, finished=False):
         if finished:
-            cls._state_info["Loading pages"] += " - done!"
-        cls._state_info["Loading pages"] = f"Loading website {websites} of {total_websites}, loaded {pages} pages"
+            cls._state_info["loading pages"] += " - done!"
+        else:
+            cls._state_info["loading pages"] = f"Loading website {websites} of {total_websites}, loaded {pages} pages"
 
     @staticmethod
     def _exit(*_):
@@ -40,7 +41,7 @@ class Controller:
 
     @staticmethod
     def _cycle(app_context, mode):
-        mode = ({"start": True, "stop": False}).get(mode)
-        if not mode:
+        mode_ = ({"start": True, "stop": False}).get(mode)
+        if mode_ is None:
             return print(f"Cycle: no such mode {mode}")
-        app_context["cycle_running"] = mode
+        app_context["cycle running"] = mode_
