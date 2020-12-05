@@ -1,14 +1,27 @@
 [
-  {
-    "url": "https://www.forbes.com/",
-    "page_pattern": "https:\\/\\/www\\.forbes\\.com\\/sites\\/\\w+\\/\\d{4}\\/\\d{2}\\/\\d{2}\\/[\\w\\d-]+\\/"
-  },
-  {
-    "url": "https://www.marketwatch.com/",
-    "page_pattern": "\\bhttps:\\/\\/www\\.marketwatch\\.com\\/story\\/.+\\b"
-  },
-  {
-    "url": "https://www.reuters.com/",
-    "page_pattern": "\\/article\\/[\\w\\-]+\\/[\\w\\-]+\\b"
-  }
+  [
+    "https://www.forbes.com/",
+    "https:\\/\\/www\\.forbes\\.com\\/sites\\/\\w+\\/\\d[4]\\/\\d[2]\\/\\d[2]\\/[\\w\\d-]+\\/"
+  ],
+  [
+    "https://www.marketwatch.com/",
+    "\\bhttps://www\\.marketwatch\\.com\\/story\\/.+\\b"
+  ],
+  [
+    "https://www.reuters.com/",
+    "\\/article\\/[\\w\\-]+\\/[\\w\\-]+\\b"
+  ],
+  [
+    "https://www.cnbc.com/",
+    "https://www\\.cnbc\\.com\\/\\d+\\/\\d+\\/\\d+\\/[\\w-]+\\.html\\/?"
+  ],
+  [
+    "https://moneymorning.com/",
+    "https:\\/\\/moneymorning\\.com\\/\\d+\\/\\d+\\/\\d+\\/[\\w-]+\\/?"
+  ],
+  [
+    "https://edition.cnn.com/business",
+    "https://edition\\.cnn\\.com\\/\\d+\\/\\d+\\/\\d+\\/\\w+\\/[\\w-]+\\/index\\.html\\/?",
+    "zn-body__paragraph"
+  ]
 ]

@@ -39,14 +39,14 @@ class Loader:
         return url
 
     @staticmethod
-    def get_pages(websites: tp.Iterable[tp.Iterable[int]], session: _Session, token_model: peewee.Model,
-                  timeout: int = 5) -> tp.Generator[None, tp.Union[tp.Tuple[str, str], None], None]:
+    def get_pages(websites: tp.Iterable[tp.Iterable[str]], session: _Session, token_model: peewee.Model,
+                  timeout: int = 5) -> tp.Iterable[str]:
         """Fetches page urls from websites' main pages and stores their's tokens."""
         Controller.set_page_loading_state(0, len(websites), 0)
         for i, website in enumerate(websites):
-            website_url, page_pattern, *_ = website.values()
+            website_url, page_pattern, *_ = website
             try:
-                if not (res := session.get(website_url, timeout=timeout)).ok:
+                if not (res := session.get(website_url, timeout=(timeout, timeout))).ok:
                     continue
                 for j, url in enumerate(re.findall(page_pattern, res.content.decode("utf-8"))):
                     url = Loader._expand_url(url, website_url)

@@ -3,6 +3,6 @@
   "websites": "websites.json",
   "loading-timeout": 5,
   "loading-interval": 3600,
-  "notificate": true,
+  "notificate": false,
   "notification-interval": 28800
 }
