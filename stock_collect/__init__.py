@@ -4,6 +4,7 @@ import os
 from datetime import datetime as dt
 from threading import Thread, Lock
 from time import sleep
+import re
 
 import peewee
 from twilio.rest import Client
@@ -60,6 +61,23 @@ class App(App):
             except Exception as e:
                 print(e)
 
+    def _get_batched_size(self, news_):
+        if self._config["preprocess"]:
+            return len(news_)
+        else:
+            return sum(Processer.count_spaces(t) for t in news_)
+
+    def _add_batch(self, add, news_):
+        if self._config["preprocess"]:
+            add = Processer.process_news(add)
+            length = len(add)
+            news_.extend(add)
+        else:
+            length = Processer.count_spaces(add)
+            news_.append(add)
+        with self._lock:
+            self._context["total words"] += length
+
     def _cycle(self):
         while True:
             if not self._context["cycle running"]:
@@ -69,11 +87,8 @@ class App(App):
             news_ = []
             with Loader.create_session() as sess:
                 for url, adt in Loader.get_pages(self.websites, sess, Token, self._config["loading-timeout"]):
-                    add = Processer.process_news(Loader.load_page(url, adt, sess))
-                    with self._lock:
-                        self._context["total words"] += len(add)
-                    news_.extend(add)
-                    if len(news_) >= self._config["batch-size"]:
+                    self._add_batch(Loader.load_page(url, adt, sess), news_)
+                    if self._get_batched_size(news_) >= self._config["batch-size"]:
                         news.news += " ".join(news_) + " "
                         news.save()
                         news_.clear()

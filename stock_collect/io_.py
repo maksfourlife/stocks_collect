@@ -82,6 +82,11 @@ class Processer:
     _lem = WordNetLemmatizer()
 
     @staticmethod
+    def count_spaces(s):
+        """Counts number of spaces to estimate number of tokens"""
+        return len(re.findall("\s+", s))
+
+    @staticmethod
     def _get_ptag(tag: str) -> str:
         """Converts normal tag to wordnet one."""
         for key, item in Processer._ptag_switch.items():
